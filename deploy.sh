@@ -28,6 +28,9 @@ TMPDIR=$(mktemp -d)
 cp -r dist/* "$TMPDIR/"
 cp dist/.nojekyll "$TMPDIR/"
 
+# Stash any uncommitted changes (e.g. verify.mjs modifying src/main.jsx)
+git stash --include-untracked -q 2>/dev/null || true
+
 # Switch to gh-pages, replace everything, commit, push
 git checkout gh-pages
 # Remove old files (keep .git)
@@ -49,8 +52,9 @@ git push origin gh-pages
 
 echo "✓ Pushed to gh-pages"
 
-# Return to master
+# Return to master and restore stashed changes
 git checkout master
+git stash pop -q 2>/dev/null || true
 echo ""
 echo "═══ Done! ═══"
 echo "Site: https://jmund15.github.io/tabi-no-kotoba/"
