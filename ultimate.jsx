@@ -1722,6 +1722,12 @@ function App() {
 
       {/* ═══ FOOTER ═══ */}
       <div style={{ padding: 20, textAlign: "center", borderTop: "1px solid rgba(196,164,132,0.08)", marginTop: 20 }}>
+        <a href="booking.html" style={{
+          display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", marginBottom: 14,
+          background: "rgba(196,164,132,0.06)", border: "1px solid rgba(196,164,132,0.15)", borderRadius: 10,
+          color: "#c4a484", textDecoration: "none", fontSize: 13, fontFamily: "'Noto Serif', serif", fontWeight: 500,
+          transition: "all 0.2s",
+        }}>🗓️ Booking Tracker & Itinerary →</a>
         <div style={{ fontSize: 11, color: "#4a3a2a" }}>Built for Jacob's Japan trip · March 22 – April 10, 2026</div>
         <div style={{ fontSize: 10, color: "#3a2a1a", marginTop: 4 }}>Kyushu → Tokyo → Kyoto → Osaka → Kawaguchiko</div>
       </div>
