@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Japan Trip Booking Tracker</title>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" as="style">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface-hover: #222;
+    --border: #2a2a2a;
+    --text: #e8e4df;
+    --text-dim: #8a857e;
+    --accent-sakura: #e8a0b4;
+    --accent-gold: #d4a855;
+    --accent-blue: #6b9fc4;
+    --accent-green: #7db87d;
+    --accent-red: #c75f5f;
+    --booked: #2d4a2d;
+    --booked-border: #4a7a4a;
+    --needed: #4a3a1a;
+    --needed-border: #7a6a3a;
+    --solo: #1a2a3a;
+    --friend: #2a1a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    font-size: 2.4rem;
+    color: var(--accent-sakura);
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+  }
+
+  header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  header .dates {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--accent-gold);
+    margin-top: 12px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .legend-dot.booked { background: var(--booked); border: 1.5px solid var(--booked-border); }
+  .legend-dot.needed { background: var(--needed); border: 1.5px solid var(--needed-border); }
+  .legend-dot.solo { background: var(--solo); border: 1.5px solid #3a5a7a; }
+  .legend-dot.friend { background: var(--friend); border: 1.5px solid #5a3a7a; }
+
+  /* Stats bar */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    font-size: 1.6rem;
+    color: var(--accent-gold);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+
+  /* Section headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    margin-top: 40px;
+  }
+
+  .section-header h2 {
+    font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    font-size: 1.3rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .section-header .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-tag {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .tag-solo { background: var(--solo); color: var(--accent-blue); border: 1px solid #3a5a7a; }
+  .tag-friend { background: var(--friend); color: #c49ed8; border: 1px solid #5a3a7a; }
+  .tag-buffer { background: #2a2a1a; color: var(--accent-gold); border: 1px solid #4a4a2a; }
+
+  /* Day cards */
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .day-card:hover {
+    border-color: #3a3a3a;
+  }
+
+  .day-card.has-booking {
+    border-left: 3px solid var(--booked-border);
+  }
+
+  .day-card.needs-booking {
+    border-left: 3px solid var(--needed-border);
+  }
+
+  .day-row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto 20px;
+    align-items: center;
+    padding: 14px 18px;
+    gap: 16px;
+    cursor: pointer;
+  }
+
+  .day-date {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .day-dow {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .day-num {
+    font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+
+  .day-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .day-location {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .day-plan {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .day-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .badge-booked {
+    background: var(--booked);
+    color: var(--accent-green);
+    border: 1px solid var(--booked-border);
+  }
+
+  .badge-needed {
+    background: var(--needed);
+    color: var(--accent-gold);
+    border: 1px solid var(--needed-border);
+  }
+
+  .badge-flight {
+    background: #1a2a3a;
+    color: var(--accent-blue);
+    border: 1px solid #3a5a7a;
+  }
+
+  .badge-splurge {
+    background: #3a1a2a;
+    color: var(--accent-sakura);
+    border: 1px solid #6a3a5a;
+  }
+
+  /* Booking detail panel */
+  .booking-detail {
+    display: none;
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .day-card.expanded .booking-detail {
+    display: block;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .detail-item {
+    background: #111;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  .detail-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+
+  .detail-value {
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .detail-value.confirmed {
+    color: var(--accent-green);
+  }
+
+  .detail-value.pending {
+    color: var(--accent-gold);
+  }
+
+  /* Budget section */
+  .budget-section {
+    margin-top: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .budget-section h3 {
+    font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+    color: var(--accent-gold);
+  }
+
+  .budget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+
+  .budget-row:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .budget-item { color: var(--text-dim); }
+  .budget-cost { font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace; color: var(--text); }
+  .budget-cost.green { color: var(--accent-green); }
+  .budget-cost.gold { color: var(--accent-gold); }
+
+  .budget-status {
+    font-size: 0.7rem;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .status-confirmed { background: var(--booked); color: var(--accent-green); }
+  .status-pending { background: var(--needed); color: var(--accent-gold); }
+
+  /* Footer */
+  .updated {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+  }
+
+  /* Expand chevron (CSS-only via pseudo-element) */
+  .day-row::after {
+    content: '›';
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    transition: transform 0.25s ease;
+    display: inline-block;
+  }
+
+  .day-card.expanded .day-row::after {
+    transform: rotate(90deg);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .day-row { grid-template-columns: 90px 1fr 20px; }
+    .day-badges { grid-column: 1 / -1; justify-content: flex-start; }
+    .detail-grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.8rem; }
+  }
+
+  /* Print stylesheet */
+  @media print {
+    body { background: #fff; color: #111; }
+    .container { max-width: 100%; padding: 10px; }
+    .day-card, .budget-section, .stat { background: #fff; border-color: #ccc; }
+    .booking-detail { display: block !important; border-top: 1px solid #ccc; }
+    .day-card { page-break-inside: avoid; margin-bottom: 12px; }
+    .badge-booked { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+    .badge-needed { background: #fff8e1; color: #f57f17; border-color: #ffe082; }
+    .badge-flight { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+    .badge-splurge { background: #fce4ec; color: #c62828; border-color: #f48fb1; }
+    .legend { display: none; }
+    .day-row::after { display: none; }
+    .stat-value { color: #333; }
+    .detail-value.confirmed { color: #2e7d32; }
+    .detail-value.pending { color: #f57f17; }
+    .budget-cost.green { color: #2e7d32; }
+    .budget-cost.gold { color: #bf8f00; }
+    .section-tag { border-color: #999; color: #555; background: #f5f5f5; }
+    header h1 { color: #333; }
+    .day-location, .day-num, .detail-value, .budget-item { color: #111; }
+    .day-plan, .day-dow, .detail-label, .stat-label { color: #555; }
+    a { color: #1565c0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🌸 Japan Adventure: Ski to Sakura</h1>
+    <div class="subtitle">Booking Tracker & Confirmed Itinerary</div>
+    <div class="dates">MARCH 22 — APRIL 10, 2026 · 20 DAYS</div>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot booked"></div> Booked & Confirmed</div>
+    <div class="legend-item"><div class="legend-dot needed"></div> Needs Booking</div>
+    <div class="legend-item"><div class="legend-dot solo"></div> Solo Leg</div>
+    <div class="legend-item"><div class="legend-dot friend"></div> Friend Leg</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">19</div>
+      <div class="stat-label">Confirmed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">19</div>
+      <div class="stat-label">Nights Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~$4,024</div>
+      <div class="stat-label">Booked So Far</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">2</div>
+      <div class="stat-label">Still Needed</div>
+    </div>
+  </div>
+
+  <!-- SOLO LEG: KYUSHU -->
+  <div class="section-header">
+    <h2>Kyushu Solo Leg</h2>
+    <span class="section-tag tag-solo">SOLO · 7 DAYS</span>
+    <div class="line"></div>
+  </div>
+
+  <!-- Day 1: Mar 22 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Sunday</span>
+        <span class="day-num">Mar 22</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo → Fukuoka</span>
+        <span class="day-plan">Land NRT 12pm · Domestic flight · Yatai stalls</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✈ FLIGHT</span>
+        <span class="badge badge-booked">✓ WEBASE</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">International Flight</div>
+          <div class="detail-value confirmed">✓ EVA Air via Taipei — $964</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Domestic Flight (Jetstar GK513)</div>
+          <div class="detail-value confirmed">✓ NRT → FUK · 3:50–6:20 PM · Terminal 3</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ WeBase Hakata Hostel · Bunk Bed (Male Dorm)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Mar 22 4:00 PM → Mar 23 11:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">¥5,662 (~$38) · Pay at property · Free cancel until Mar 20</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Address / Phone</div>
+          <div class="detail-value">Hakataku Tenyamachi 5-9, Fukuoka · +81 92-292-2322</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Evening</div>
+          <div class="detail-value">Yatai stalls, Nakasu River</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 2: Mar 23 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Monday</span>
+        <span class="day-num">Mar 23</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Fukuoka → Nagasaki</span>
+        <span class="day-plan">Kamome train · Atomic Bomb Museum · Mt. Inasa night view</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ KAGAMIYA</span>
+
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Transport</div>
+          <div class="detail-value">Ltd Express Kamome, 2h (JR Pass)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation — CONFIRMED</div>
+          <div class="detail-value confirmed">✔ Nagasaki Kagamiya · Twin Room · Hongouchi 1-12-9</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Mar 23 3:00–9:00 PM → Mar 24 10:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">¥5,500 (~$37) · Charged via Booking.com Mar 19 · Free cancel until Mar 20</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Phone</div>
+          <div class="detail-value">Kagamiya: +81 958-958250</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlights</div>
+          <div class="detail-value">Atomic Bomb Museum, Peace Park, Glover Garden, Chinatown</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Food</div>
+          <div class="detail-value">Champon at Shikairō</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 3: Mar 24 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Tuesday</span>
+        <span class="day-num">Mar 24</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Nagasaki → Kumamoto → Mt. Aso ⭐</span>
+        <span class="day-plan">Shinkansen 45min · Basashi food crawl · Volcano sunset · Sleep in caldera</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ ASOBE</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ Asobe · Economy Single Room · Otohime 1952-18, Aso</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Mar 24 3:00–9:00 PM → Mar 25 10:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">~$47 · Booking.com · Free cancellation before Mar 21</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Onsen</div>
+          <div class="detail-value">Private onsens on-site — some bookable at reception, others first-come · Ask to reserve at check-in</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Transport</div>
+          <div class="detail-value">Shinkansen Nagasaki→Kumamoto (45 min) · Pick up rental car at Kumamoto Station (Nippon Rent-A-Car) 1:00 PM · Drive to Mt. Aso via Route 57 (~1.5h)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">🚗 Car Rental — CONFIRMED</div>
+          <div class="detail-value confirmed">✔ Nippon Rent-A-Car · Compact (FIT/Corolla class) · English GPS + ETC + Bluetooth · Reservation TC-260223-002500 · Pickup: Mar 24 1:00 PM · Return: Mar 27 3:00 PM Beppu · Total: ¥42,790 + ¥5,580 TAS (~$323) · Charged to card</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlights</div>
+          <div class="detail-value">Basashi (horse sashimi) at on-site restaurant · Onsen soak · Stargazing · 6 Perfect Grade Gundams on display</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 4: Mar 25 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Wednesday</span>
+        <span class="day-num">Mar 25</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Mt. Aso Morning → Kurokawa Onsen</span>
+        <span class="day-plan">Crater rim · Kusasenri grasslands · Daikanbo · Bus to Kurokawa 2pm</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ KURASAKO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Transport</div>
+          <div class="detail-value">🚗 Drive Aso → Daikanbo Viewpoint → Yamanami Highway → Kurokawa Onsen (~1.5h) · Scenic mountain route — park at ryokan</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ Kurasako Onsen Sakura · Holiday Home (Sumire) · 50m² private cabin · Private onsen · Breakfast incl. · Agoda #971128506 · Free cancel until Mar 22</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Morning</div>
+          <div class="detail-value">Crater rim (if open), Kusasenri grasslands, Daikanbo Observatory panorama</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Evening</div>
+          <div class="detail-value">Arrive ~2pm, explore village, onsen soak, lantern-lit night walk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 5: Mar 26 — SPLURGE -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Thursday</span>
+        <span class="day-num">Mar 26</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kurokawa Onsen ⭐⭐</span>
+        <span class="day-plan">Rotemburo meguri · Kaiseki dinner · Private cottage onsen</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-splurge">✨ SPLURGE</span>
+        <span class="badge badge-booked">✓ BOOKED</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item" style="grid-column: 1/-1;">
+          <div class="detail-label">Confirmed Booking</div>
+          <div class="detail-value confirmed" style="font-size: 0.95rem;">
+            ✓ Yamamizuki Bettei Miyama Sansou — Detached Western-style Room (Type A2)
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Mar 26, 3:00 PM → Mar 27, 11:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">¥56,650 (~$378) · 2 meals included</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cancellation</div>
+          <div class="detail-value">Free cancel before Mar 22, 2026</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Includes</div>
+          <div class="detail-value">Private indoor onsen · Kaiseki dinner · Breakfast · Access to Yamamizuki baths</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Booked Via</div>
+          <div class="detail-value">Japanican (JTB)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Address</div>
+          <div class="detail-value">6393 Manganji, Minamioguni-machi, Aso-gun, Kumamoto 869-2402</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 6: Mar 27 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Friday</span>
+        <span class="day-num">Mar 27</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kurokawa → Yufuin → Beppu</span>
+        <span class="day-plan">Kinrin Lake · Yunotsubo Street · Jigoku Mushi dinner</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ OMOLOSO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Transport</div>
+          <div class="detail-value">🚗 Drive Kurokawa → Yufuin (~1h) · Explore Kinrin Lake + Yunotsubo St · Drive Yufuin → Beppu (~40 min) · Return car at Nippon Rent-A-Car Beppu Kanko Minato by 3:00 PM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ OMOLOSO Hostel · Twin Room · Kannawa district (98m from Hells) · Agoda #971141238 · Free cancel until Mar 26</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day 7: Mar 28 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Saturday</span>
+        <span class="day-num">Mar 28</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Beppu Full Day</span>
+        <span class="day-plan">Hell Tour · Sand bath · Hyotan Onsen 19 tubs</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ OMOLOSO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ OMOLOSO Hostel · Night 2 of 2 · Checkout Mar 29 10:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Highlights</div>
+          <div class="detail-value">5–6 Hells, Jigoku Mushi steam-cooking, beach sand bath, Hyotan Onsen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRIEND LEG -->
+  <div class="section-header">
+    <h2>Friend Leg</h2>
+    <span class="section-tag tag-friend">TOKYO + FRIEND · 13 DAYS · 2 TRAVELERS</span>
+    <div class="line"></div>
+  </div>
+
+  <!-- Mar 29 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Sunday</span>
+        <span class="day-num">Mar 29</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Beppu → Tokyo — AnimeJapan Day 1</span>
+        <span class="day-plan">Early Solaseed Air OIT→HND · AnimeJapan @ Big Sight · Shinjuku check-in</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✈ SOLASEED</span>
+        <span class="badge badge-booked">✓ ANIMEJAPAN</span>
+        <span class="badge badge-booked">✓ UNPLAN</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Domestic Flight</div>
+          <div class="detail-value confirmed">✔ Solaseed Air SNA Flight 092 · OIT → HND · 08:30–10:00 · ¥22,650 · Ref: EM6E5Z</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">AnimeJapan 2026</div>
+          <div class="detail-value confirmed">✔ Admission + Stage Lottery · ¥8,400 total · Booking #1521770808048748 · Mar 29, 2026</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ UNPLAN Shinjuku · Res #T013CA9FF5AA2 · Night 1 of 5</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Getting There</div>
+          <div class="detail-value">Rinkai Line from Big Sight → Shinjuku (~40 min)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mar 30 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Monday</span>
+        <span class="day-num">Mar 30</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo — Cherry Blossom Scouting</span>
+        <span class="day-plan">Recovery · Cherry blossom scouting · Prep for friends</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ UNPLAN</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ UNPLAN Shinjuku · Night 2 of 5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mar 31 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Tuesday</span>
+        <span class="day-num">Mar 31</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo — Kyle Arrives 🎉</span>
+        <span class="day-plan">Shibuya Crossing · Tokyo Metropolitan Gov Building (free) · Izakaya dinner</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ UNPLAN</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ UNPLAN Shinjuku · Night 3 of 5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 1 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Wednesday</span>
+        <span class="day-num">Apr 1</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo — Gaming & Pop Culture</span>
+        <span class="day-plan">Akihabara · Super Potato · Nintendo Tokyo · Pokémon Center</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ UNPLAN</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ UNPLAN Shinjuku · Night 4 of 5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 2 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Thursday</span>
+        <span class="day-num">Apr 2</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo — TeamLab & Exploration</span>
+        <span class="day-plan">TeamLab Planets · Pokémon Cafe · Round 1 Odaiba</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ TEAMLAB</span>
+        <span class="badge badge-booked">✓ UNPLAN</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ UNPLAN Shinjuku · Night 5 of 5 (checkout Apr 3)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 3 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Friday</span>
+        <span class="day-num">Apr 3</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo → Kyoto 🌸 — Night 1 of 3</span>
+        <span class="day-plan">Nozomi 17 depart 8:30 → Kyoto 10:44 · Higashiyama · Kiyomizu-dera · Gion</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ NOZOMI</span>
+        <span class="badge badge-booked">✓ RIRASO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item" style="grid-column: 1/-1;">
+          <div class="detail-label">Shinkansen — CONFIRMED · SmartEX Res #2001</div>
+          <div class="detail-value confirmed">✔ Tokyo → Kyoto · NOZOMI 17 · 8:30–10:44 · N700 (16 cars) · Car 3, Seats 8-D &amp; 8-E · 2 adults · ¥27,940 · Visa ····6577 · QR-Ticket or IC card</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ RIRASO Guest House · Room 3E · Airbnb Ref: HM42BFWD8M</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Apr 3 3:00–11:00 PM → Apr 6 10:00 AM (3 nights)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Address</div>
+          <div class="detail-value">4-1 Karahasi Kadowakicho, Minami Ward, Kyoto · Max 4 guests</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Location Note</div>
+          <div class="detail-value">1 stop south of Kyoto Station — ~10 min to central Kyoto by train</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Luggage</div>
+          <div class="detail-value">Can store in room from 11:00 AM before check-in</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 4 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Saturday</span>
+        <span class="day-num">Apr 4</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kyoto — Peak Cherry Blossoms 🌸 — Night 2 of 3</span>
+        <span class="day-plan">Fushimi Inari · Philosopher's Path · Arashiyama · Maruyama Park</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ RIRASO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ RIRASO Guest House · Room 3E · Night 2 of 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 5 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Sunday</span>
+        <span class="day-num">Apr 5</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kyoto → Nara Day Trip — Night 3 of 3 at RIRASO</span>
+        <span class="day-plan">Deer park · Todai-ji · Back to Kyoto for last night at RIRASO</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ RIRASO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ RIRASO Guest House · Room 3E · Night 3 of 3 · Checkout Apr 6 10 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Note</div>
+          <div class="detail-value">Nara day trip from Kyoto ~45 min each way (Kintetsu Line). Return to RIRASO tonight, check out Apr 6 morning → head to Osaka.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 6 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Monday</span>
+        <span class="day-num">Apr 6</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kyoto Checkout → Osaka — Night 1 of 2</span>
+        <span class="day-plan">Checkout RIRASO · Awashima Shrine · Medetai Train · Nintendo Osaka</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ GRAND HOSTEL</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ GRAND HOSTEL LDK Osaka Shinsaibashi · Bunk Bed Mixed Dorm</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value confirmed">Apr 6 → Apr 8 (2 nights) · 2 guests</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">¥26,632 (~$178) total for 3 · Booking Ref: 299208-575457558</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Address</div>
+          <div class="detail-value">Shimanouchi 1, Chōme 14-29, Osaka 542-0082 · Shinsaibashi area</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">⚠ Important</div>
+          <div class="detail-value" style="color:var(--accent-sakura);">No-show = entire stay cancelled. Must arrive or contact them on Apr 6.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 7 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Tuesday</span>
+        <span class="day-num">Apr 7</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Osaka — Final Night 🏙️</span>
+        <span class="day-plan">Last evening in Osaka · Night 2 of 2 at GRAND HOSTEL · Depart for Kawaguchiko morning of Apr 8</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ GRAND HOSTEL</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ GRAND HOSTEL LDK Osaka · Night 2 of 2 · Checkout morning Apr 8</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Next Morning</div>
+          <div class="detail-value">Depart Shin-Osaka 10:06 Apr 8 → Nozomi 8 to Nagoya → Kodama 816 to Mishima (arr 12:49) → Bus 13:20–14:50 → Hotel New Century 3:00 PM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Apr 8 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Wednesday</span>
+        <span class="day-num">Apr 8</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kawaguchiko — The Money Shot 📸</span>
+        <span class="day-plan">Nozomi 10:06 → Kodama → Mishima 12:49 · Bus 13:20–14:50 · Check in 3PM · Fuji sunset · Chureito sunrise next AM</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ SHINKANSEN</span>
+        <span class="badge badge-booked">✓ BUS</span>
+        <span class="badge badge-booked">✓ HOTEL</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Transport — CONFIRMED</div>
+          <div class="detail-value confirmed">✔ Mishima/Kawaguchiko Liner (Fujikyu City Bus) · Seats 09A, 09B · SEKITORI web booking</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Bus Schedule</div>
+          <div class="detail-value confirmed">Depart 13:20 Mishima Station South Exit (Platform 2) → Arrive 14:50 Kawaguchiko Station · 1h 30m · No toilet · WiFi</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Bus Cost</div>
+          <div class="detail-value confirmed">¥4,600 (2 seats, web discount) · Cancel fee: ¥100 before departure, 100% after</div>
+        </div>
+        <div class="detail-item" style="grid-column: 1/-1;">
+          <div class="detail-label">Shinkansen — CONFIRMED · SmartEX Res #2000</div>
+          <div class="detail-value confirmed">✔ Shin-Osaka → Nagoya → Mishima · 2 adults · ¥24,220 · Visa ····6577 · QR-Ticket or IC card</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Leg 1: Shin-Osaka → Nagoya</div>
+          <div class="detail-value confirmed">NOZOMI 8 · 10:06–10:55 · N700 (16 cars) · Car 3, Seats 5-A &amp; 5-B</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Leg 2: Nagoya → Mishima</div>
+          <div class="detail-value confirmed">KODAMA 816 · 11:08–12:49 · N700 (16 cars) · Car 12, Seats 5-D &amp; 5-E · 13 min transfer at Nagoya</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value confirmed">✔ Hotel New Century · Booking #967360398</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Room</div>
+          <div class="detail-value confirmed">Mt. Fuji & Lake View Japanese Room · 2 adults · 4 futons</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Check-in / Check-out</div>
+          <div class="detail-value">Apr 8 3:00 PM → Apr 9 11:00 AM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value confirmed">$385.38 total (2 adults — update booking) · Free cancel until Apr 5</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Onsen</div>
+          <div class="detail-value">7F cypress panoramic bath (Fuji view) · 1F lava rock bath</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Contact</div>
+          <div class="detail-value">+81 555-72-1422 · Asakawa, Fujikawaguchiko</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Apr 9 -->
+  <div class="day-card needs-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Thursday</span>
+        <span class="day-num">Apr 9</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Kawaguchiko → Shinjuku</span>
+        <span class="day-plan">Chureito Pagoda sunrise · Fuji Excursion 94 at 3:39 PM · Nakano Broadway · Farewell dinner</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ FUJI EXCURSION</span>
+        <span class="badge badge-needed">🏨 TOKYO</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Train — CONFIRMED</div>
+          <div class="detail-value confirmed">✔ Fuji Excursion 94 · Kawaguchiko → Shinjuku · 2 tickets</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Schedule</div>
+          <div class="detail-value confirmed">Depart 15:39 Kawaguchiko → Arrive 17:45 Shinjuku · 2h 6m</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">⚠ Ticket Pickup</div>
+          <div class="detail-value" style="color:var(--accent-sakura);">Cannot pick up at Kawaguchiko. Must collect tickets in advance at: Tokyo, Shinjuku, Shibuya, Ueno, or Narita Airport stations</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Accommodation</div>
+          <div class="detail-value pending">⚠ Still needed — Tokyo hotel for final night</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Evening</div>
+          <div class="detail-value">Nakano Broadway, farewell dinner, last shopping</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apr 10 -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Friday</span>
+        <span class="day-num">Apr 10</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Departure ✈</span>
+        <span class="day-plan">Narita Express · Flight 1:25 PM</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✈ BOOKED</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Flight</div>
+          <div class="detail-value confirmed">✓ EVA Air · Departs NRT 1:25 PM · via Taipei</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ACTIVITIES & RESERVATIONS -->
+  <div class="section-header" style="margin-top:48px;">
+    <h2>Activities &amp; Reservations</h2>
+    <span class="section-tag tag-buffer">ADVANCE BOOKING REQUIRED</span>
+    <div class="line"></div>
+  </div>
+
+  <!-- AnimeJapan - CONFIRMED -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Mar 29–30</span>
+        <span class="day-num" style="font-size:0.9rem;">Tokyo</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">AnimeJapan 2026</span>
+        <span class="day-plan">Tokyo Big Sight · 2 travelers (3rd ticket unused) · 2 days</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ CONFIRMED</span>
+        <span class="badge badge-splurge">🎌 EVENT</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Status</div>
+          <div class="detail-value confirmed">✓ Tickets confirmed for Jacob &amp; Kyle (Alex dropped out — 1 ticket unused)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Venue</div>
+          <div class="detail-value">Tokyo Big Sight (Ariake) — Rinkai Line from Shinjuku ~40 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <!-- Tokyo Met Gov Building - FREE -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Mar 31</span>
+        <span class="day-num" style="font-size:0.9rem;">Tokyo</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Tokyo Metropolitan Government Building</span>
+        <span class="day-plan">Free observatory · 202m · Shinjuku skyline at sunset · 5-min walk from UNPLAN</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ FREE</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Access</div>
+          <div class="detail-value">5-min walk from UNPLAN Shinjuku · South Observatory open until 10:30 PM</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value">Free · No booking required</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Tip</div>
+          <div class="detail-value">Go at sunset (around 6:00 PM Mar 31) · Midday has longer queues · 360° views of Shinjuku, Fuji on clear days</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pokemon Cafe - NEEDED -->
+  <div class="day-card needs-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Apr 1–2</span>
+        <span class="day-num" style="font-size:0.9rem;">Tokyo</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Pokemon Cafe (Nihonbashi)</span>
+        <span class="day-plan">Themed food &amp; drinks · Reservation-only · Books out fast</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-needed">🎫 RESERVE NOW</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Booking</div>
+          <div class="detail-value pending">Online reservation at pokemoncenter-online.com — opens ~1 month out, sells out same day</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Location</div>
+          <div class="detail-value">Nihonbashi Takashimaya S.C. · Chuo line, 15 min from Shinjuku</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value">~¥2,000–3,500/person for food + drinks</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Tip</div>
+          <div class="detail-value">Set your alarm for the exact reservation window opening. Fills in minutes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TeamLab Planets - BOOKED -->
+  <div class="day-card has-booking" onclick="this.classList.toggle('expanded')">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Apr 2</span>
+        <span class="day-num" style="font-size:0.9rem;">Tokyo</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">TeamLab Planets Tokyo</span>
+        <span class="day-plan">Water immersive art · Toyosu · 1:30 PM · 2 adults</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-booked">✓ BOOKED</span>
+        <span class="badge badge-splurge">✨ TEAMLAB</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Booking</div>
+          <div class="detail-value confirmed">✔ Booking #30325413 · Apr 2, 1:30 PM · 2 adults (update booking)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Venue</div>
+          <div class="detail-value">TeamLab Planets · Toyosu, Koto-ku — Yukishio Station (Yurikamome Line) · ⚠️ Different from Borderless (Azabudai Hills)</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Tip</div>
+          <div class="detail-value">Wear clothes you don't mind getting wet — water rooms require bare feet/legs. Allow ~1.5–2 hrs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beppu Sand Bath - FYI -->
+  <div class="day-card" onclick="this.classList.toggle('expanded')" style="border-left:3px solid #3a5a7a;">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Mar 28</span>
+        <span class="day-num" style="font-size:0.9rem;">Beppu</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Beppu Takegawara Sand Bath</span>
+        <span class="day-plan">Historic sand bath (1879) · Walk-in possible, pre-booking recommended in peak season</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-flight">&#x2139; RECOMMENDED</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Booking</div>
+          <div class="detail-value">Walk-in usually fine but call ahead: +81 977-23-1585 — peak season can have waits</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Cost</div>
+          <div class="detail-value">¥700 sand bath + ¥500 regular bath = ¥1,200 total — very cheap</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kawaguchiko Chureito Pagoda - FYI -->
+  <div class="day-card" onclick="this.classList.toggle('expanded')" style="border-left:3px solid #3a5a7a;">
+    <div class="day-row">
+      <div class="day-date">
+        <span class="day-dow">Apr 9</span>
+        <span class="day-num" style="font-size:0.9rem;">Kawaguchiko</span>
+      </div>
+      <div class="day-summary">
+        <span class="day-location">Chureito Pagoda Sunrise (4:30 AM)</span>
+        <span class="day-plan">Free · No booking needed · ~400 steps · Arrive before sunrise crowd</span>
+      </div>
+      <div class="day-badges">
+        <span class="badge badge-flight">&#x2139; FREE</span>
+      </div>
+    </div>
+    <div class="booking-detail">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">Access</div>
+          <div class="detail-value">Fujikyu Railway to Shimoyoshida Station — ~15 min walk + 398 steps to pagoda</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Tip</div>
+          <div class="detail-value">April cherry blossoms frame Fuji perfectly. Arrive by 4:30 AM to claim front-row spot — it fills up by 5 AM in peak season.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET SUMMARY -->
+  <div class="budget-section">
+    <h3>💰 Confirmed Bookings Running Total</h3>
+    <div class="budget-row">
+      <span class="budget-item">EVA Air round-trip (DFW→NRT→DFW via TPE) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">$964</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Domestic: NRT → Fukuoka (Mar 22, 3:50–6:20 PM) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$50</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Miyama Sansou, Kurokawa (Mar 26–27, 1 night, 2 meals) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥56,650 (~$378)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Hotel New Century, Kawaguchiko (Apr 8–9, 1 night, 2 adults) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">$385</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">UNPLAN Shinjuku (Mar 29–Apr 3, 5 nights, 2 adults, breakfast incl.) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">$881</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Solaseed Air SNA Flight 092 OIT → HND (Mar 29, 08:30–10:00) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥22,650 (~$151)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">AnimeJapan 2026 tickets · Standard + Stage Lottery <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥8,400 (~$56)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">WeBase Hakata Hostel (Mar 22, 1 night, male dorm) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥5,662 (~$38)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Nagasaki Kagamiya (Mar 23, 1 night, twin room) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥5,500 (~$37)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">RIRASO Guest House, Kyoto (Apr 3–6, 3 nights, Room 3E) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$150–180 est.</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">GRAND HOSTEL LDK Osaka Shinsaibashi (Apr 6–8, 2 nights, 2 guests) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥26,632 (~$178)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Asobe Ryokan, Mt. Aso (Mar 24, 1 night, Economy Single, private onsen) <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$47</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Kurasako Onsen Sakura (Mar 25, 1 night, breakfast incl.) · Agoda #971128506 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">$93</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">TeamLab Planets tickets (Apr 2, 1:30 PM, 2 adults) · Booking #30325413 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$75</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">OMOLOSO Hostel, Beppu (Mar 27–29, 2 nights, 1 adult) · Agoda #971141238 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$143</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Nippon Rent-A-Car · Compact · Mar 24–27 (Kumamoto → Beppu, one-way) · TC-260223-002500 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥48,370 (~$323)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">SmartEX Shinkansen Shin-Osaka → Mishima (Apr 8, Nozomi 8 + Kodama 816) · Res #2000 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥24,220 (~$162)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Mishima/Kawaguchiko Liner bus (Apr 8, 13:20–14:50) · Seats 09A, 09B · SEKITORI <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥4,600 (~$31)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Fuji Excursion 94 · Kawaguchiko → Shinjuku (Apr 9, 15:39–17:45) · 2 tickets <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">~$50</span>
+    </div>
+    <div class="budget-row" style="border-top: 2px solid var(--border); margin-top: 4px;">
+      <span class="budget-item" style="color: var(--text);">Total Confirmed</span>
+      <span class="budget-cost gold" style="font-size: 1.1rem;">~$4,024+</span>
+    </div>
+  </div>
+
+  <!-- NEXT BOOKINGS -->
+  <div class="budget-section" style="margin-top: 16px; border-color: var(--needed-border);">
+    <h3 style="color: var(--accent-gold);">📋 Next Priority Bookings</h3>
+
+    <div class="budget-row" style="padding-top:14px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-red);">🔥 CRITICAL — Book This Week</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">1. Pokémon Cafe reservation (Apr 1–2) — opens ~1 month out, fills same day</span>
+      <span class="budget-cost gold">~¥2,000–3,500/person</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">2. <s>Shinkansen Tokyo→Kyoto Apr 3</s> — DONE ✓ SmartEX Res #2001</span>
+      <span class="budget-cost green">¥27,940 ✓</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">3. Shinjuku Gyoen timed entry (Mar 29, Sunday) — mandatory on weekends during sakura · Asoview</span>
+      <span class="budget-cost gold">¥500</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">4. Sagano Romantic Train (Arashiyama, Apr 3–5) — 1-month window open, sells out fast · Car 5 = open-air</span>
+      <span class="budget-cost gold">¥880</span>
+    </div>
+
+    <div class="budget-row" style="padding-top:12px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-gold);">⚠ Book Before Trip</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">5. Northern Kyushu 5-Day JR Pass — activate Mar 22, covers Fukuoka→Nagasaki→Kumamoto→Beppu</span>
+      <span class="budget-cost gold">¥17,000</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">6. Final night — Tokyo hotel (Apr 9)</span>
+      <span class="budget-cost gold">~$50–100</span>
+    </div>
+
+    <div class="budget-row" style="padding-top:12px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);">💡 Consider (Optional)</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">7. Ghibli Museum (Mitaka) — advance-only via Lawson · April slots on sale since Mar 10 (check availability)</span>
+      <span class="budget-cost gold">¥1,000</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">8. Shibuya Sky sunset slot — timed entry, sunset sells out days ahead</span>
+      <span class="budget-cost gold">¥2,200</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">9. Kimono rental in Kyoto (Apr 3–5) — peak season, book 1 month ahead (Yumeyakata, Waplus, etc.)</span>
+      <span class="budget-cost gold">~¥5,000–8,000</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">10. Chidorigafuchi cherry blossom boats — "Smart Tickets" ¥12,000/boat (3 ppl) · avoids 1–3 hr wait</span>
+      <span class="budget-cost gold">¥12,000/boat</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">11. USJ / Super Nintendo World (Apr 6–7) — check Express Pass availability NOW (60-day window passed)</span>
+      <span class="budget-cost gold">~¥10,000–20,000</span>
+    </div>
+  </div>
+
+  <!-- JR PASS & TRANSPORT -->
+  <div class="budget-section" style="margin-top: 16px;">
+    <h3 style="color: var(--accent-blue);">🚄 JR Pass & Transport Strategy</h3>
+
+    <div class="budget-row" style="padding-top:14px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-green);">✓ RECOMMENDED</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Northern Kyushu 5-Day Pass — activate Mar 22 · Covers Kamome, Kyushu Shinkansen, 6 seat reservations</span>
+      <span class="budget-cost green">¥17,000</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">SmartEX app — book Shinkansen seats in advance · QR code boarding · Free changes up to 4 min before</span>
+      <span class="budget-cost" style="color:var(--text-dim);">per-trip</span>
+    </div>
+
+    <div class="budget-row" style="padding-top:12px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-blue);">KEY LEGS</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Tokyo → Kyoto (Apr 3) — NOZOMI 17 · 8:30–10:44 · Car 3, 8-D/E · SmartEX #2001 <span class="budget-status status-confirmed">BOOKED</span></span>
+      <span class="budget-cost green">¥27,940</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Kyoto → Osaka (Apr 6) — JR Special Rapid · 30 min · No reservation needed</span>
+      <span class="budget-cost" style="color:var(--text-dim);">~¥580</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">Shin-Osaka → Mishima (Apr 8) — Nozomi 8 + Kodama 816 · 10:06–12:49 · Then bus to Kawaguchiko <span class="budget-status status-confirmed">ALL BOOKED</span></span>
+      <span class="budget-cost green">¥24,220 + ¥4,600</span>
+    </div>
+
+    <div class="budget-row" style="padding-top:12px;padding-bottom:4px;">
+      <span class="budget-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-red);">✗ NOT RECOMMENDED</span>
+    </div>
+    <div class="budget-row">
+      <span class="budget-item">National 7-Day JR Pass — ¥50,000 · Barely breaks even (car mid-Kyushu, fly Beppu→Tokyo, no Nozomi)</span>
+      <span class="budget-cost" style="color:var(--accent-red);text-decoration:line-through;">¥50,000</span>
+    </div>
+  </div>
+
+  <div class="updated">
+    Last updated: March 17, 2026 (v12 — Fuji Excursion added, 2 travelers) · Tap any day to expand details
+    <br>📝 <a href="#" style="color:var(--accent-blue);text-decoration:underline;">Trip Notes Google Doc</a> — for on-the-fly edits during the trip (replace this link with your actual Google Doc URL)
+  </div>
+
+</div>
+</body>
+</html>
